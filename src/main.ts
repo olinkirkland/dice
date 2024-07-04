@@ -4,6 +4,7 @@ import './styles.css';
 
 const DICE_SIZE = 1;
 const GROUND_SIZE = 10;
+let useNumberTextures = false;
 
 // Set up the Three.js scene
 const scene = new THREE.Scene();
@@ -16,6 +17,7 @@ const camera = new THREE.PerspectiveCamera(
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+const loader = new THREE.TextureLoader();
 
 // Add a basic light to the scene
 const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -36,7 +38,10 @@ world.addBody(groundBody);
 
 // Create a ground plane in the Three.js scene
 const groundGeometry = new THREE.PlaneGeometry(10, 10);
-const groundMaterial = new THREE.MeshToonMaterial({ color: 0x808080 });
+const groundTexture = loader.load('textures/oak.png');
+const groundMaterial = new THREE.MeshToonMaterial({
+  map: groundTexture
+});
 const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
 groundMesh.rotation.x = -Math.PI / 2;
 scene.add(groundMesh);
@@ -88,14 +93,22 @@ const diceBodies: CANNON.Body[] = [];
 const diceMeshes: THREE.Mesh[] = [];
 
 // Load textures for dice faces
-const loader = new THREE.TextureLoader();
-const textures = [
-  loader.load('images/1.png'),
-  loader.load('images/2.png'),
-  loader.load('images/3.png'),
-  loader.load('images/4.png'),
-  loader.load('images/5.png'),
-  loader.load('images/6.png')
+const numberTextures = [
+  loader.load('textures/numbers/1.png'),
+  loader.load('textures/numbers/2.png'),
+  loader.load('textures/numbers/3.png'),
+  loader.load('textures/numbers/4.png'),
+  loader.load('textures/numbers/5.png'),
+  loader.load('textures/numbers/6.png')
+];
+
+const diceTextures = [
+  loader.load('textures/dice/1.png'),
+  loader.load('textures/dice/2.png'),
+  loader.load('textures/dice/3.png'),
+  loader.load('textures/dice/4.png'),
+  loader.load('textures/dice/5.png'),
+  loader.load('textures/dice/6.png')
 ];
 
 // Function to create a die (cube) and add it to both Cannon.js and Three.js
@@ -133,6 +146,7 @@ function createDie() {
 
   // Three.js: create a mesh for the die
   const geometry = new THREE.BoxGeometry(DICE_SIZE, DICE_SIZE, DICE_SIZE);
+  const textures = useNumberTextures ? numberTextures : diceTextures;
   const materials = textures.map(
     (texture) => new THREE.MeshBasicMaterial({ map: texture })
   );
@@ -142,18 +156,20 @@ function createDie() {
 }
 
 // Handle user click to drop a new die
-let isCreatingDice = false;
+let canCreateDice = false;
+let timeToStartCreatingDice = new Date().getTime();
 window.addEventListener('mousedown', () => {
-  isCreatingDice = true;
+  timeToStartCreatingDice = new Date().getTime() + 400;
+  canCreateDice = true;
+  createDie();
 });
 window.addEventListener('mouseup', () => {
-  isCreatingDice = false;
+  canCreateDice = false;
 });
 
 setInterval(() => {
-  if (isCreatingDice) {
+  if (canCreateDice && new Date().getTime() > timeToStartCreatingDice)
     createDie();
-  }
 }, 100);
 
 window.addEventListener('keydown', (event) => {
@@ -162,7 +178,11 @@ window.addEventListener('keydown', (event) => {
     case ' ':
       diceBodies.forEach((body) => {
         if (Math.abs(body.velocity.y) > 0.01) return;
-        body.velocity.set(Math.random() * 2 - 1, 5, Math.random() * 2 - 1);
+        body.velocity.set(
+          Math.random() * 2 - 1,
+          Math.random() * 5 + 2,
+          Math.random() * 2 - 1
+        );
       });
       break;
 
@@ -173,8 +193,46 @@ window.addEventListener('keydown', (event) => {
       diceMeshes.forEach((mesh) => scene.remove(mesh));
       diceMeshes.length = 0;
       break;
+
+    case 'd':
+      // Toggle between number textures and dice textures
+      useNumberTextures = !useNumberTextures;
+      break;
+
+    case 'c':
+      // Calculate what numbers are face up
+      calculateDiceFaces();
+      break;
   }
 });
+
+function calculateDiceFaces() {
+  console.log('==== Dice faces ====');
+  diceBodies.forEach((body, i) => {
+    // What angle is the body at X Y Z
+    const angles = new CANNON.Vec3();
+    body.quaternion.toEuler(angles);
+    const degrees = angles.scale(180 / Math.PI);
+    const dieValue = determineDieValueFromDegrees(
+      Math.round(degrees.x),
+      Math.round(degrees.z)
+    );
+
+    if (dieValue < 0)
+      console.warn('Could not determine die value from degrees', degrees);
+    else console.log(dieValue);
+  });
+}
+
+function determineDieValueFromDegrees(x: number, z: number) {
+  if (x === 0 && z === 90) return 1;
+  if (x === 0 && z === -90) return 2;
+  if (x === 0 && z === 0) return 3;
+  if (Math.abs(x) === 180 && z === 0) return 4;
+  if (x === -90 && z === 0) return 5;
+  if (x === 90 && z === 0) return 6;
+  return -1;
+}
 
 // Animation loop and update function
 function animate() {
