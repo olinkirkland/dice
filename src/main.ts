@@ -208,10 +208,10 @@ window.addEventListener('keydown', (event) => {
 
 function calculateDiceFaces() {
   console.log('==== Dice faces ====');
-  diceBodies.forEach((body, i) => {
+  diceBodies.forEach((dieBody) => {
     // What angle is the body at X Y Z
     const angles = new CANNON.Vec3();
-    body.quaternion.toEuler(angles);
+    dieBody.quaternion.toEuler(angles);
     const degrees = angles.scale(180 / Math.PI);
     const dieValue = determineDieValueFromDegrees(
       Math.round(degrees.x),
