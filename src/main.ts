@@ -158,14 +158,21 @@ function createDie() {
 // Handle user click to drop a new die
 let canCreateDice = false;
 let timeToStartCreatingDice = new Date().getTime();
-window.addEventListener('mousedown', () => {
+
+window.addEventListener('mousedown', onMouseDown);
+window.addEventListener('mouseup', onMouseUp);
+window.addEventListener('touchstart', onMouseDown);
+window.addEventListener('touchend', onMouseUp);
+
+function onMouseDown() {
   timeToStartCreatingDice = new Date().getTime() + 400;
   canCreateDice = true;
   createDie();
-});
-window.addEventListener('mouseup', () => {
+}
+
+function onMouseUp() {
   canCreateDice = false;
-});
+}
 
 setInterval(() => {
   if (canCreateDice && new Date().getTime() > timeToStartCreatingDice)
