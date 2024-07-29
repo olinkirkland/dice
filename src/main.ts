@@ -1,6 +1,9 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
-import { getRandomHeightMap as getHeightMap } from './height-map';
+import {
+  getRandomHeightMap as getHeightMap,
+  SNAP_SEGMENTS
+} from './height-map';
 import './styles.css';
 import { getColorBetweenColors } from './utils/image-util';
 
@@ -42,7 +45,8 @@ for (let x = 0; x < MAP_SIZE; x++) {
 }
 
 // Set the camera position
-camera.position.set(0, 10, 20);
+let cameraMode: 'rotate' | 'top' = 'rotate';
+camera.position.set(0, 20, 0);
 camera.lookAt(0, 0, 0);
 
 // Create the Cannon.js world
@@ -72,6 +76,9 @@ setInterval(() => {
 
 window.addEventListener('keydown', (event) => {
   switch (event.key) {
+    case ' ':
+      cameraMode = cameraMode === 'rotate' ? 'top' : 'rotate';
+      break;
   }
 });
 
@@ -88,7 +95,8 @@ async function load() {
   // Load tiles
   terrainTileData.forEach((data) => {
     const position = new THREE.Vector3(...data.position);
-    position.y = heightMap[data.point.x][data.point.y] * 2;
+    position.y =
+      heightMap[data.point.x][data.point.y] * SNAP_SEGMENTS * data.geometry[1];
     const geometry = new THREE.BoxGeometry(...data.geometry);
     const color = getColorBetweenColors(
       0x0000ff,
@@ -123,12 +131,21 @@ function onMouseUp() {}
 function animate() {
   requestAnimationFrame(animate);
 
-  // Slowly rotate the camera around the center
-  camera.position.x = Math.sin(Date.now() / 10000) * 20;
-  camera.position.z = Math.cos(Date.now() / 10000) * 20;
-  camera.lookAt(0, 0, 0);
+  switch (cameraMode) {
+    case 'rotate':
+      // Slowly rotate the camera around the center
+      camera.position.y = 20;
+      camera.position.x = Math.sin(Date.now() / 10000) * 20;
+      camera.position.z = Math.cos(Date.now() / 10000) * 20;
+      camera.lookAt(0, 0, 0);
+      break;
+    case 'top':
+      camera.position.set(0, 32, 0);
+      camera.lookAt(0, 0, 0);
+      break;
+  }
 
-  // world.step(1 / 60);
+  world.step(1 / 60);
 
   // Sync Cannon.js bodies with Three.js meshes
   for (let i = 0; i < physicsBodies.length; i++) {

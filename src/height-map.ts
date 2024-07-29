@@ -1,8 +1,7 @@
 import { loadImage } from './utils/image-util';
 
-const MAX_HEIGHT_MAP_INDEX = 1;
-const SNAP_SEGMENTS = 5;
-export const SEGMENT_SIZE = 1 / SNAP_SEGMENTS;
+const MAX_HEIGHT_MAP_INDEX = 2;
+export const SNAP_SEGMENTS = 5;
 const heights = Array.from(
   { length: SNAP_SEGMENTS + 1 },
   (_, i) => i / SNAP_SEGMENTS
