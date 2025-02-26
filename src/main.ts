@@ -4,7 +4,6 @@ import './styles.css';
 
 const DICE_SIZE = 1;
 const GROUND_SIZE = 10;
-let useNumberTextures = false;
 
 // Set up the Three.js scene
 const scene = new THREE.Scene();
@@ -93,23 +92,20 @@ const diceBodies: CANNON.Body[] = [];
 const diceMeshes: THREE.Mesh[] = [];
 
 // Load textures for dice faces
-const numberTextures = [
-  loader.load('textures/numbers/1.png'),
-  loader.load('textures/numbers/2.png'),
-  loader.load('textures/numbers/3.png'),
-  loader.load('textures/numbers/4.png'),
-  loader.load('textures/numbers/5.png'),
-  loader.load('textures/numbers/6.png')
-];
+const numberTextures = [1, 2, 3, 4, 5, 6].map((i) =>
+  loader.load(`textures/numbers/${i}.png`)
+);
 
-const diceTextures = [
-  loader.load('textures/dice/1.png'),
-  loader.load('textures/dice/2.png'),
-  loader.load('textures/dice/3.png'),
-  loader.load('textures/dice/4.png'),
-  loader.load('textures/dice/5.png'),
-  loader.load('textures/dice/6.png')
-];
+const diceTextures = [1, 2, 3, 4, 5, 6].map((i) =>
+  loader.load(`textures/dice/${i}.png`)
+);
+
+const grimwildTextures = [1, 2, 3, 4, 5, 6].map((i) =>
+  loader.load(`textures/grimwild/${i}.png`)
+);
+
+const TEXTURES = [numberTextures, diceTextures, grimwildTextures];
+let textureIndex = 0;
 
 // Function to create a die (cube) and add it to both Cannon.js and Three.js
 function createDie() {
@@ -146,7 +142,7 @@ function createDie() {
 
   // Three.js: create a mesh for the die
   const geometry = new THREE.BoxGeometry(DICE_SIZE, DICE_SIZE, DICE_SIZE);
-  const textures = useNumberTextures ? numberTextures : diceTextures;
+  const textures = TEXTURES[textureIndex];
   const materials = textures.map(
     (texture) => new THREE.MeshBasicMaterial({ map: texture })
   );
@@ -202,8 +198,8 @@ window.addEventListener('keydown', (event) => {
       break;
 
     case 'd':
-      // Toggle between number textures and dice textures
-      useNumberTextures = !useNumberTextures;
+      // Change the texture set
+      textureIndex = (textureIndex + 1) % TEXTURES.length;
       break;
 
     case 'c':
